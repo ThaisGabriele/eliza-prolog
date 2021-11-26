@@ -12,7 +12,7 @@ oi --> [oi].
 computador --> [computador].
 nome --> [nome].
 desculpe --> [desculpe].
-meupai --> [meu, pai].
+%% meupai --> [meu, pai].
 sair --> [bye].
 
 
@@ -25,10 +25,17 @@ sublist(T, L) :-
     append([_, [T], _], L).
 
 
-pergunta_simples(meupai,L) --> sublist(meupai,L), palavras(L).
+frase(meupai, L) --> [meu, pai], palavras(L).
+frase(meupai, L) --> palavras(_), [meu, pai], palavras(L).
 
 frase(sonhei_com, L) --> [eu, sonhei, com], palavras(L).
 frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], palavras(L).
+
+frase(estou_feliz, L) --> [estou, feliz], palavras(L).
+frase(estou_feliz, L) --> palavras(_), [estou, feliz], palavras(L).
+
+frase(estou_triste, L) --> [estou, triste], palavras(L).
+frase(estou_triste, L) --> palavras(_), [estou, triste], palavras(L).
 
 palavras([]) --> [].
 palavras([P|R]) --> [P], palavras(R).
@@ -38,7 +45,14 @@ palavras([P|R]) --> [P], palavras(R).
 
 interpretar(E,eh_computador) :-sublist(computador,E).
 
-interpretar(E,meu_pai) :-sublist(meupai,E).
+interpretar(E,meu_pai) :- 
+    frase(meupai, L, E, []).
+
+interpretar(E,tem_estou_feliz) :- 
+    frase(estou_feliz, L, E, []).
+
+interpretar(E,tem_estou_triste) :- 
+    frase(estou_triste, L, E, []).
 
 interpretar(E,eh_oi) :- sublist(oi,E).
 
@@ -58,6 +72,19 @@ responder(meu_pai) :-
                         'O que mais vem à mente quando você pensa no seu pai?']),
     enumere(Resp),
     interagir.
+
+responder(tem_estou_feliz) :-
+    random_member(Resp, ['Eu tenho alguma influência nisso?',
+                        'O que te faz feliz?',
+                        'Você pode explicar o porque de feliz?']),
+    enumere(Resp),
+    interagir.    
+
+responder(tem_estou_triste) :-
+    random_member(Resp, ['Sinto que você se sinta assim',
+                        'Estou certo de que não é prazeroso estar assim']),
+    enumere(Resp),
+    interagir.    
 
 responder(eh_oi) :-
     write("Como vai você? Por favor, me fale do seu problema."),nl,nl,
