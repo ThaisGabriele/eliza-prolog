@@ -24,47 +24,69 @@ minha --> [minha].
 
 %% Regras
 
-%% nova_resp(P,S) :- [P,S].
 
-sublist([P|R], L) :-
-    append([_, [P|R], _], L).
-    
-sublist(T, L) :-
-    append([_, [T], _], L).
+artigo(a) --> [a].
+artigo(a) --> [as].
+artigo(a) --> [o].
+artigo(a) --> [os].
 
+prep(de) --> [de].
+prep(de) --> [do].
+prep(de) --> [da].
+prep(de) --> [para].
+prep(de) --> [sem].
+prep(de) --> [com].
+prep(de) --> [que].
 
-frase(meupai, L) --> [meu, pai], palavras(L).
+frase(meupai, L) --> palavras(_), [meu, pai], prep(de), palavras(L).
 frase(meupai, L) --> palavras(_), [meu, pai], palavras(L).
+frase(meupai, L) --> [meu, pai], palavras(L).
 
-frase(sonhei_com, L) --> [eu, sonhei, com], palavras(L).
-frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], pronome(minha,L), palavras(L).
+frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], artigo(a), palavras(L).
 frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], palavras(L).
+frase(sonhei_com, L) --> [eu, sonhei, com], palavras(L).
 
-frase(estou_feliz, L) --> [estou, feliz], palavras(L).
+frase(eu_sonhei,L) --> palavras(_), [eu, sonhei], palavras(L).
+frase(eu_sonhei,L) --> [eu, sonhei], palavras(L).
+
+
 frase(estou_feliz, L) --> palavras(_), [estou, feliz], palavras(L).
+frase(estou_feliz, L) --> [estou, feliz], palavras(L).
 
-frase(estou_triste, L) --> [estou, triste], palavras(L).
 frase(estou_triste, L) --> palavras(_), [estou, triste], palavras(L).
+frase(estou_triste, L) --> [estou, triste], palavras(L).
 
-frase(estou_triste, L) --> [estou, triste], palavras(L).
-frase(estou_triste, L) --> palavras(_), [estou, triste], palavras(L).
+frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], artigo(a), palavras(L2).
+frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], palavras(L2).
+frase(sao_como, L1, L2) --> palavras(L1), [sao, como], palavras(L2).
+
+frase(eu_lembro, L) --> palavras(_), [eu, lembro], prep(de) , palavras(L).
+frase(eu_lembro, L) --> palavras(_), [eu, lembro], palavras(L).
+frase(eu_lembro, L) --> [eu, lembro], palavras(L).
 
 palavras([]) --> [].
+
 palavras([P|R]) --> [P], palavras(R).
 
-nova_resp_sonhei_com(sonhei_com, L, P, S) --> palavras(_), [eu, sonhei, com], pronome(minha, P), subst(palavra,S), palavras(L).
-
-%% nova_resp_sonhei_com(sonhei_com, L, P, S) :- 
-%%    palavras(_), [eu, sonhei, com], pronome(minha, P), subst(palavra,S), palavras(L),
+sublist([P|R], L) :- append([_, [P|R], _], L).
     
+sublist(T, L) :- append([_, [T], _], L).
 
-/*
-pega_curinga2(E, newList) :-
-    insert()
-*/
-subst(palavra, S) --> [S].
+% replace(pronome,novo_pronome,Lista,L)
+% replace(minha,sua,[minha,viagem],X)
 
-pronome(minha, L) --> [sua].
+replace(_, _, [], []).
+replace(Pron, NewPron, [Pron|S], [NewPron|SR]) :- replace(Pron, NewPron, S, SR).
+replace(Pron, NewPron, [H|S], [H|SR]) :- H \= Pron, replace(Pron, NewPron, S, SR).
+
+
+replace_minha([C,S],L) :-
+    C == minha,
+    replace(minha, sua,[C,S],L).
+
+replace_meu([C,S],L) :-
+    C == meu,
+    replace(meu, seu,[C,S],L).
 
 % member(Item, List) - succeeds if the item is a member of the list;
 %   List must be instantiated at the time member is called. Item need not
@@ -73,42 +95,19 @@ pronome(minha, L) --> [sua].
 %% Interpretador de linguagem natural
 %% Nesta parte, o objetivo é interpretar a entrada do usuário e descobrir com qual regra ela se adequa
 
-interpretar(E,eh_computador) :-sublist(computador,E).
 
-interpretar(E,meu_pai) :- 
-    frase(meupai, _, E, []).
-
-/*
-interpretar(E,tem_sonhei_com) :- 
-    frase(sonhei_com, L, E, []),
-    nova_resp_sonhei_com(L, nova_resp).
-
-*/
-/* sonhei com -
- Entrada  E = [eu, sonhei, com, minha, viagem]
- Como você se sente em relação a [2] na verdade?
- Como você se sente em relação a [sua viagem] na verdade?
-*/
-
-% Examples of use:
-% ?- member(b, [a, b, c]).
-% true.
-% 
-% ?- member(X, [a, b, c]).
-% X = a ;
-% X = b ;
-% X = c ;
-% false.
-
-
-/*
-interpretar(E,tem_sonhei_com) :- 
-    frase(sonhei_com, L, E, []).
-*/
+interpretar(E,meu_pai) :- frase(meupai, _, E, []).
 
 interpretar(E,tem_sonhei_com) :- 
-    frase(sonhei_com, L, E, []),
-    asserta(base_respostas(L,sonhei_com)).
+    frase(sonhei_com, L, E,[]),
+    replace_minha(L,LN),
+    asserta(base_respostas(LN,sonhei_com)).
+
+interpretar(E,tem_eu_sonhei) :- 
+    frase(eu_sonhei, L, E,[]),
+    asserta(base_respostas(L,eu_sonhei)).
+
+
 
 interpretar(E,tem_estou_feliz) :- 
     frase(estou_feliz, _, E, []).
@@ -116,7 +115,20 @@ interpretar(E,tem_estou_feliz) :-
 interpretar(E,tem_estou_triste) :- 
     frase(estou_triste, _, E, []).
 
+interpretar(E,tem_sao_como) :-
+    frase(sao_como, L1, L2,E, []),
+    asserta(base_respostas(L1,sao_como1)),
+    asserta(base_respostas(L2,sao_como2)).
+
+interpretar(E,tem_eu_lembro) :-
+    frase(eu_lembro, L, E, []),
+    asserta(base_respostas(L,eu_lembro)).
+
+%% ER de "1 palavra"
+
 interpretar(E,eh_oi) :- sublist(oi,E).
+
+interpretar(E,eh_computador) :-sublist(computador,E).
 
 interpretar(E,tem_nome) :- sublist(nome,E).
 
@@ -130,21 +142,47 @@ interpretar(E,tem_mesmo) :- sublist(mesmo,E).
 
 interpretar(E,tem_sou) :- sublist(sou,E). 
 
+interpretar(E,tem_sim) :- sublist(sim,E). 
+
+interpretar(E,tem_nao) :- sublist(nao,E). 
+
+interpretar(E,tem_alguem) :- sublist(alguem,E). 
+
+interpretar(E,tem_todos) :- sublist(todos,E). 
+
+interpretar(E,tem_sempre) :- sublist(sempre,E). 
+
+interpretar(E,tem_talvez) :- sublist(talvez,E). 
+
 interpretar(E,frase_sair) :- sair(E,[]). 
 
 interpretar(_,frase_nao_reconhecida).
 
 %% teste
 
-write_name((_, Name)) :-
-  writeln(Name).
-
 responder(meu_pai) :-
     random_member(Resp, ['Seu pai?',
                         'Ele influencia você fortemente?',
                         'O que mais vem à mente quando você pensa no seu pai?']),
     enumere(Resp),
+    interagir. 
+
+
+responder(tem_sonhei_com) :-
+    call(base_respostas,Resp,sonhei_com),
+    write("Como você se sente em relação a "), enum_resp(Resp), write(" na verdade?"), nl,nl,
+    retractall(base_respostas(_,_)),
     interagir.
+
+responder(tem_eu_sonhei) :-
+    call(base_respostas,Res,eu_sonhei),
+    random_member(Resp, ['Realmente?' + write(Res) +'?',
+                        'Ele influencia você fortemente?',
+                        'O que mais vem à mente quando você pensa no seu pai?']),
+    enumere(Resp),
+    retractall(base_respostas(_,_)),
+    interagir. 
+ 
 
 responder(tem_estou_feliz) :-
     random_member(Resp, ['Eu tenho alguma influência nisso?',
@@ -157,23 +195,28 @@ responder(tem_estou_triste) :-
     random_member(Resp, ['Sinto que você se sinta assim',
                         'Estou certo de que não é prazeroso estar assim']),
     enumere(Resp),
-    interagir.    
+    interagir.   
 
-responder(tem_sonhei_com):-
-  %%   asserta(base_respostas(P,S)),
-    call(base_respostas,Resp,S),
+responder(tem_sao_como) :-
+    call(base_respostas,Resp1,sao_como1),
+    call(base_respostas,Resp2,sao_como2),
    %% enumere(L),
-   %% Res = term_string(S),
-    write("Como você se sente em relação a "), write(Resp), write(" na verdade?"), nl,nl,
+    write("Que semelhança você vê entre " ), enum_resp(Resp1), write(' e '), enum_resp(Resp2), nl,nl,
+    retractall(base_respostas(_,_)),
     interagir.
 
+
+responder(tem_eu_lembro) :-
+    call(base_respostas,Res,eu_lembro),
+    random_member(Resp, ['Você normalmente lembra' + write(Res) +'?' ,
+                'Lembrar'+ write(Res) + 'traz alguma outra lembrança à sua mente?',
+                'Que outras coisas você lembra?']),
+    enumere(Resp),
+    retractall(base_respostas(_,_)),
+    interagir.
 
 responder(eh_oi) :-
     write("Como vai você? Por favor, me fale do seu problema."),nl,nl,
-    interagir.
-
-responder(tem_nome) :-
-    write("Não estou interessado em nomes"),nl,nl,
     interagir.
 
 responder(eh_computador) :-
@@ -182,6 +225,10 @@ responder(eh_computador) :-
                 'Porque você menciona computadores?',
                 'O que você acha que máquinas tem a ver com o seu problema?']),
     enumere(Resp),
+    interagir.
+
+responder(tem_nome) :-
+    write("Não estou interessado em nomes"),nl,nl,
     interagir.
 
 responder(tem_desculpe) :-
@@ -215,6 +262,39 @@ responder(tem_sou) :-
     enumere(Resp),
     interagir.
 
+responder(tem_sim) :-
+    random_member(Resp, ['Você parece uma pessoa bem positiva',
+                'Tem certeza?', 'Entendo']),
+    enumere(Resp),
+    interagir.
+
+responder(tem_nao) :-
+    random_member(Resp, ['Porque não?',
+                'Você está sendo um pouco negativo', 'Você diz não só pra ser negativo?']),
+    enumere(Resp),
+    interagir.
+
+responder(tem_alguem) :-
+    write("Você pode ser mais específico?"),nl,nl,
+    interagir.
+
+responder(tem_todos) :-
+    random_member(Resp, ['Com certeza não todos',
+                        'Pode pensar em alguém em particular?',
+                        'Quem por exemplo?',
+                        'Você está pensando em alguém em particular?']),
+    enumere(Resp),
+    interagir.
+
+responder(tem_sempre) :-
+    random_member(Resp, ['Você pode dar um exemplo específico',
+                        'Quando?',
+                        'Sobre o que você está pensando?',
+                        'Realmente sempre?']),
+    enumere(Resp),
+    interagir.
+
+
 responder(frase_nao_reconhecida) :-
     random_member(Resp, ['Muito interessante.',
                         'Não sei se entendi você direito',
@@ -224,6 +304,10 @@ responder(frase_nao_reconhecida) :-
                         'Você quer mesmo falar sobre isso?',
                         'Elabore melhor']),
     enumere(Resp),
+    interagir.
+
+responder(tem_talvez) :-
+    write("Você não parece muito certo"),nl,nl,
     interagir.
 
 responder(frase_sair) :-
@@ -243,7 +327,21 @@ normalize_string([H|R], [H|NR]) :-
     normalize_string(R, NR).
 
 enumere(L):-
-    write(L),nl,nl.
+    write('  '), enum_resp(L), nl,nl.
+
+
+enum_resp([]) :- write(" * ").
+
+enum_resp([P]) :- write(P).
+
+enum_resp([P1,P2]) :- 
+    write(P1), write(" "),  write(P2).
+
+enum_resp(P) :- 
+    write(P).
+
+
+enum_resp([_,P2]) :- write(P2).
 
 prompt(L) :-
     write('> '),
