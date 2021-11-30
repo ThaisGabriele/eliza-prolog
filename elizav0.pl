@@ -18,6 +18,7 @@ sair --> [bye].
 sonho --> [sonho].
 minha --> [minha].
 
+
 %% Base de respostas
 
 %% base_respostas(_,_).
@@ -38,16 +39,25 @@ prep(de) --> [sem].
 prep(de) --> [com].
 prep(de) --> [que].
 
+pronome(p) --> [minha].
+pronome(p) --> [meu].
+
 frase(meupai, L) --> palavras(_), [meu, pai], prep(de), palavras(L).
 frase(meupai, L) --> palavras(_), [meu, pai], palavras(L).
 frase(meupai, L) --> [meu, pai], palavras(L).
 
-frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], artigo(a), palavras(L).
-frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], palavras(L).
+%% frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], pronome(a), palavras(L).
+%% frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], artigo(a), palavras(L).
+
 frase(sonhei_com, L) --> [eu, sonhei, com], palavras(L).
+frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], palavras(L).
 
 frase(eu_sonhei,L) --> palavras(_), [eu, sonhei], palavras(L).
 frase(eu_sonhei,L) --> [eu, sonhei], palavras(L).
+
+%% frase(eu_sinto, L) --> palavras(_), [eu, sinto], prep(a), palavras(L).
+frase(eu_sinto, L) --> palavras(_), [eu, sinto], palavras(L).
+frase(eu_sinto, L) --> [eu, sinto], palavras(L).
 
 
 frase(estou_feliz, L) --> palavras(_), [estou, feliz], palavras(L).
@@ -56,6 +66,12 @@ frase(estou_feliz, L) --> [estou, feliz], palavras(L).
 frase(estou_triste, L) --> palavras(_), [estou, triste], palavras(L).
 frase(estou_triste, L) --> [estou, triste], palavras(L).
 
+frase(por_causa, L) --> palavras(_), [por, causa], palavras(L).
+frase(por_causa, L) --> [por, causa], palavras(L).
+
+frase(eu_sonhei, L) --> palavras(_), [eu, sentia], palavras(L).
+frase(eu_sentia, L) --> [eu, sentia], palavras(L).
+
 frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], artigo(a), palavras(L2).
 frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], palavras(L2).
 frase(sao_como, L1, L2) --> palavras(L1), [sao, como], palavras(L2).
@@ -63,6 +79,8 @@ frase(sao_como, L1, L2) --> palavras(L1), [sao, como], palavras(L2).
 frase(eu_lembro, L) --> palavras(_), [eu, lembro], prep(de) , palavras(L).
 frase(eu_lembro, L) --> palavras(_), [eu, lembro], palavras(L).
 frase(eu_lembro, L) --> [eu, lembro], palavras(L).
+
+%% reconhece_palavra([P|R],L) --> [minha], palavras(L).
 
 palavras([]) --> [].
 
@@ -79,34 +97,35 @@ replace(_, _, [], []).
 replace(Pron, NewPron, [Pron|S], [NewPron|SR]) :- replace(Pron, NewPron, S, SR).
 replace(Pron, NewPron, [H|S], [H|SR]) :- H \= Pron, replace(Pron, NewPron, S, SR).
 
+output([P|R], [Output|R]) :-   
+    (P, Output) = (minha, sua) ;
+    (P, Output) = (meu, seu) ;
+    (P, Output) = (eu, voce) ;
+    (P, Output) = (voce, eu) ;
+    (P, Output) = (sou, e) ;
+    (P, Output) = (fui, foi) ;
+    (P, Output) = (seu, meu).
 
-replace_minha([C,S],L) :-
-    C == minha,
-    replace(minha, sua,[C,S],L).
 
-replace_meu([C,S],L) :-
-    C == meu,
-    replace(meu, seu,[C,S],L).
-
-% member(Item, List) - succeeds if the item is a member of the list;
-%   List must be instantiated at the time member is called. Item need not
-%   be instantiated.
 
 %% Interpretador de linguagem natural
 %% Nesta parte, o objetivo é interpretar a entrada do usuário e descobrir com qual regra ela se adequa
-
 
 interpretar(E,meu_pai) :- frase(meupai, _, E, []).
 
 interpretar(E,tem_sonhei_com) :- 
     frase(sonhei_com, L, E,[]),
-    replace_minha(L,LN),
+    output(L, LN),
     asserta(base_respostas(LN,sonhei_com)).
 
 interpretar(E,tem_eu_sonhei) :- 
     frase(eu_sonhei, L, E,[]),
     asserta(base_respostas(L,eu_sonhei)).
 
+interpretar(E,tem_eu_sinto) :- 
+    frase(eu_sinto, L, E,[]),
+    output(L, LN),
+    asserta(base_respostas(LN,eu_sinto)).
 
 
 interpretar(E,tem_estou_feliz) :- 
@@ -114,6 +133,12 @@ interpretar(E,tem_estou_feliz) :-
 
 interpretar(E,tem_estou_triste) :- 
     frase(estou_triste, _, E, []).
+
+interpretar(E,tem_por_causa) :- 
+    frase(por_causa, _, E, []).
+
+interpretar(E,tem_eu_sentia) :- 
+    frase(eu_sentia, _, E, []).
 
 interpretar(E,tem_sao_como) :-
     frase(sao_como, L1, L2,E, []),
@@ -177,12 +202,17 @@ responder(tem_sonhei_com) :-
 responder(tem_eu_sonhei) :-
     call(base_respostas,Res,eu_sonhei),
     random_member(Resp, ['Realmente?' + write(Res) +'?',
-                        'Ele influencia você fortemente?',
-                        'O que mais vem à mente quando você pensa no seu pai?']),
+                        'Você já sonhou [2] enquanto acordado?',
+                        'Você já havia sonhado [2] antes?']),
     enumere(Resp),
     retractall(base_respostas(_,_)),
     interagir. 
  
+responder(tem_eu_sinto) :-
+    call(base_respostas,Resp,eu_sinto),
+    write("Você sempre sente "), enum_resp(Resp), write('?'), nl,nl,
+    retractall(base_respostas(_,_)),
+    interagir.
 
 responder(tem_estou_feliz) :-
     random_member(Resp, ['Eu tenho alguma influência nisso?',
@@ -195,7 +225,18 @@ responder(tem_estou_triste) :-
     random_member(Resp, ['Sinto que você se sinta assim',
                         'Estou certo de que não é prazeroso estar assim']),
     enumere(Resp),
-    interagir.   
+    interagir.  
+
+responder(tem_por_causa) :-
+    random_member(Resp, ['Essa é a razão?',
+                        'Que outras razões você acha que poderiam haver?',
+                        'E isto explica tudo?']),
+    enumere(Resp),
+    interagir.    
+
+responder(tem_eu_sentia) :-
+    write("Que outras coisas você sente?"),nl,nl,
+    interagir.
 
 responder(tem_sao_como) :-
     call(base_respostas,Resp1,sao_como1),
@@ -208,10 +249,11 @@ responder(tem_sao_como) :-
 
 responder(tem_eu_lembro) :-
     call(base_respostas,Res,eu_lembro),
-    random_member(Resp, ['Você normalmente lembra' + write(Res) +'?' ,
-                'Lembrar'+ write(Res) + 'traz alguma outra lembrança à sua mente?',
+    random_member(Resp, [
+                ['Você normalmente lembra de', enum_resp(Res) ,'?'] ,
+                ['Lembrar de', Res, 'traz alguma outra lembrança à sua mente?'],
                 'Que outras coisas você lembra?']),
-    enumere(Resp),
+    enum_resp(Resp),
     retractall(base_respostas(_,_)),
     interagir.
 
@@ -327,7 +369,7 @@ normalize_string([H|R], [H|NR]) :-
     normalize_string(R, NR).
 
 enumere(L):-
-    write('  '), enum_resp(L), nl,nl.
+    write('  '), enum_resp(L).
 
 
 enum_resp([]) :- write(" * ").
