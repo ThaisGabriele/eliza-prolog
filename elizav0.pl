@@ -17,7 +17,8 @@ desculpe --> [desculpe].
 sair --> [bye].
 sonho --> [sonho].
 minha --> [minha].
-
+e --> [e].
+como --> [como].
 
 %% Base de respostas
 
@@ -42,9 +43,6 @@ prep(de) --> [que].
 pronome(p) --> [minha].
 pronome(p) --> [meu].
 
-frase(meupai, L) --> palavras(_), [meu, pai], prep(de), palavras(L).
-frase(meupai, L) --> palavras(_), [meu, pai], palavras(L).
-frase(meupai, L) --> [meu, pai], palavras(L).
 
 %% frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], pronome(a), palavras(L).
 %% frase(sonhei_com, L) --> palavras(_), [eu, sonhei, com], artigo(a), palavras(L).
@@ -59,6 +57,21 @@ frase(eu_sonhei,L) --> [eu, sonhei], palavras(L).
 frase(eu_sinto, L) --> palavras(_), [eu, sinto], palavras(L).
 frase(eu_sinto, L) --> [eu, sinto], palavras(L).
 
+frase(eu_lembro, L) --> palavras(_), [eu, lembro], prep(de) , palavras(L).
+frase(eu_lembro, L) --> palavras(_), [eu, lembro], palavras(L).
+frase(eu_lembro, L) --> [eu, lembro], palavras(L).
+
+frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], artigo(a), palavras(L2).
+frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], palavras(L2).
+frase(sao_como, L1, L2) --> palavras(L1), [sao, como], palavras(L2).
+
+frase(eh_como, L1, L2) --> artigo(a), palavras(L1), [e], [como], artigo(a), palavras(L2).
+frase(eh_como, L1, L2) --> artigo(a), palavras(L1), [e],[como], palavras(L2).
+frase(eh_como, L1, L2) --> palavras(L1), [eh, como], palavras(L2).
+
+frase(meupai, L) --> palavras(_), [meu, pai], prep(de), palavras(L).
+frase(meupai, L) --> palavras(_), [meu, pai], palavras(L).
+frase(meupai, L) --> [meu, pai], palavras(L).
 
 frase(estou_feliz, L) --> palavras(_), [estou, feliz], palavras(L).
 frase(estou_feliz, L) --> [estou, feliz], palavras(L).
@@ -72,13 +85,7 @@ frase(por_causa, L) --> [por, causa], palavras(L).
 frase(eu_sonhei, L) --> palavras(_), [eu, sentia], palavras(L).
 frase(eu_sentia, L) --> [eu, sentia], palavras(L).
 
-frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], artigo(a), palavras(L2).
-frase(sao_como, L1, L2) --> artigo(a), palavras(L1), [sao, como], palavras(L2).
-frase(sao_como, L1, L2) --> palavras(L1), [sao, como], palavras(L2).
 
-frase(eu_lembro, L) --> palavras(_), [eu, lembro], prep(de) , palavras(L).
-frase(eu_lembro, L) --> palavras(_), [eu, lembro], palavras(L).
-frase(eu_lembro, L) --> [eu, lembro], palavras(L).
 
 %% reconhece_palavra([P|R],L) --> [minha], palavras(L).
 
@@ -97,21 +104,23 @@ replace(_, _, [], []).
 replace(Pron, NewPron, [Pron|S], [NewPron|SR]) :- replace(Pron, NewPron, S, SR).
 replace(Pron, NewPron, [H|S], [H|SR]) :- H \= Pron, replace(Pron, NewPron, S, SR).
 
-output([P|R], [Output|R]) :-   
+output([],[_]).
+
+output([P|S], [Output|S]) :-   
     (P, Output) = (minha, sua) ;
     (P, Output) = (meu, seu) ;
     (P, Output) = (eu, voce) ;
     (P, Output) = (voce, eu) ;
     (P, Output) = (sou, e) ;
     (P, Output) = (fui, foi) ;
-    (P, Output) = (seu, meu).
-
-
+    (P, Output) = (seu, meu);
+    (P, Output) = (P, P);
+    output(S, [Output|S]) .
 
 %% Interpretador de linguagem natural
 %% Nesta parte, o objetivo é interpretar a entrada do usuário e descobrir com qual regra ela se adequa
 
-interpretar(E,meu_pai) :- frase(meupai, _, E, []).
+/* Expressões com curinga [2] */
 
 interpretar(E,tem_sonhei_com) :- 
     frase(sonhei_com, L, E,[]),
@@ -127,6 +136,27 @@ interpretar(E,tem_eu_sinto) :-
     output(L, LN),
     asserta(base_respostas(LN,eu_sinto)).
 
+interpretar(E,tem_eu_lembro) :-
+    frase(eu_lembro, L, E, []),
+    output(L, LN),
+    asserta(base_respostas(LN,eu_lembro)).
+
+/* Expressões com curinga [1] e [2] */
+
+interpretar(E,tem_sao_como) :-
+    frase(sao_como, L1, L2,E, []),
+    asserta(base_respostas(L1,sao_como1)),
+    asserta(base_respostas(L2,sao_como2)).   
+
+interpretar(E,tem_eh_como) :-
+    frase(eh_como, L1, L2,E, []),
+    asserta(base_respostas(L1,eh_como)),
+    asserta(base_respostas(L2,eh_como)).   
+
+
+/* Expressões de duas palavras e resposta simples */
+
+interpretar(E,meu_pai) :- frase(meupai, _, E, []).
 
 interpretar(E,tem_estou_feliz) :- 
     frase(estou_feliz, _, E, []).
@@ -140,16 +170,7 @@ interpretar(E,tem_por_causa) :-
 interpretar(E,tem_eu_sentia) :- 
     frase(eu_sentia, _, E, []).
 
-interpretar(E,tem_sao_como) :-
-    frase(sao_como, L1, L2,E, []),
-    asserta(base_respostas(L1,sao_como1)),
-    asserta(base_respostas(L2,sao_como2)).
-
-interpretar(E,tem_eu_lembro) :-
-    frase(eu_lembro, L, E, []),
-    asserta(base_respostas(L,eu_lembro)).
-
-%% ER de "1 palavra"
+/* Expressões de 1 palavra e resposta simples */
 
 interpretar(E,eh_oi) :- sublist(oi,E).
 
@@ -183,7 +204,66 @@ interpretar(E,frase_sair) :- sair(E,[]).
 
 interpretar(_,frase_nao_reconhecida).
 
-%% teste
+/* Respostas */
+
+responder(tem_sonhei_com) :-
+    call(base_respostas,LResp,sonhei_com),
+    atomic_list_concat(LResp, ' ', Atom), 
+    atom_string(Atom, StringResp),
+    write("Como você se sente em relação a "), write(StringResp), write(" na verdade?"), nl,nl,
+    retractall(base_respostas(_,_)),
+    interagir.
+
+responder(tem_eu_sonhei) :-
+    call(base_respostas,LResp,eu_sonhei),
+    atomic_list_concat(LResp, ' ', Atom), 
+    atom_string(Atom, StringResp),
+    random_member(Resp, ["Realmente?", StringResp, "?",
+                        "Você já sonhou", StringResp, "enquanto acordado?",
+                        "Você já havia sonhado", StringResp, "antes?"]),
+    enum_resp(Resp),
+    retractall(base_respostas(_,_)),
+    interagir. 
+ 
+responder(tem_eu_sinto) :-
+    call(base_respostas,LResp,eu_sinto),
+    atomic_list_concat(LResp, ' ', Atom), 
+    atom_string(Atom, StringResp),
+    write("Você sempre sente "), write(StringResp), write('?'), nl,nl,
+    retractall(base_respostas(_,_)),
+    interagir.
+
+responder(tem_eu_lembro) :-
+    call(base_respostas,LResp,eu_lembro),
+    atomic_list_concat(LResp, ' ', Atom), 
+    atom_string(Atom, StringResp),
+    random_member(Resp, ['Você normalmente lembra de' + StringResp +'?' ,
+                'Lembrar de' + StringResp +'traz alguma outra lembrança à sua mente?',
+                'Que outras coisas você lembra?',
+                'Porque você lembra ' + StringResp + 'nesse momento?',
+                'O que na situação atual faz você lembrar ' + StringResp +'?',
+                'Qual a conexão entre lembrar ' + StringResp + 'e eu?']),
+    enumere(Resp),
+    retractall(base_respostas(_,_)),
+    interagir.
+
+responder(tem_sao_como) :-
+    call(base_respostas,Resp1,sao_como1),
+    call(base_respostas,Resp2,sao_como2),
+    write("Que semelhança você vê entre " ), enum_resp(Resp1), write(' e '), enum_resp(Resp2), nl,nl,
+    retractall(base_respostas(_,_)),
+    interagir.
+
+responder(tem_eh_como) :-
+    call(base_respostas,Resp1,tem_eh_como),
+    call(base_respostas,Resp2,tem_eh_como),
+    random_member(Resp, ['De que forma', write(Resp1), 'é como', write(Resp2),'?',
+                        'Que semelhança você vê?',
+                        'Será que há realmente alguma coisa em comum?',
+                        'Como?']),
+    enumere(Resp),
+    retractall(base_respostas(_,_)),
+    interagir. 
 
 responder(meu_pai) :-
     random_member(Resp, ['Seu pai?',
@@ -192,27 +272,6 @@ responder(meu_pai) :-
     enumere(Resp),
     interagir. 
 
-
-responder(tem_sonhei_com) :-
-    call(base_respostas,Resp,sonhei_com),
-    write("Como você se sente em relação a "), enum_resp(Resp), write(" na verdade?"), nl,nl,
-    retractall(base_respostas(_,_)),
-    interagir.
-
-responder(tem_eu_sonhei) :-
-    call(base_respostas,Res,eu_sonhei),
-    random_member(Resp, ['Realmente?' + write(Res) +'?',
-                        'Você já sonhou [2] enquanto acordado?',
-                        'Você já havia sonhado [2] antes?']),
-    enumere(Resp),
-    retractall(base_respostas(_,_)),
-    interagir. 
- 
-responder(tem_eu_sinto) :-
-    call(base_respostas,Resp,eu_sinto),
-    write("Você sempre sente "), enum_resp(Resp), write('?'), nl,nl,
-    retractall(base_respostas(_,_)),
-    interagir.
 
 responder(tem_estou_feliz) :-
     random_member(Resp, ['Eu tenho alguma influência nisso?',
@@ -238,24 +297,6 @@ responder(tem_eu_sentia) :-
     write("Que outras coisas você sente?"),nl,nl,
     interagir.
 
-responder(tem_sao_como) :-
-    call(base_respostas,Resp1,sao_como1),
-    call(base_respostas,Resp2,sao_como2),
-   %% enumere(L),
-    write("Que semelhança você vê entre " ), enum_resp(Resp1), write(' e '), enum_resp(Resp2), nl,nl,
-    retractall(base_respostas(_,_)),
-    interagir.
-
-
-responder(tem_eu_lembro) :-
-    call(base_respostas,Res,eu_lembro),
-    random_member(Resp, [
-                ['Você normalmente lembra de', enum_resp(Res) ,'?'] ,
-                ['Lembrar de', Res, 'traz alguma outra lembrança à sua mente?'],
-                'Que outras coisas você lembra?']),
-    enum_resp(Resp),
-    retractall(base_respostas(_,_)),
-    interagir.
 
 responder(eh_oi) :-
     write("Como vai você? Por favor, me fale do seu problema."),nl,nl,
@@ -369,8 +410,7 @@ normalize_string([H|R], [H|NR]) :-
     normalize_string(R, NR).
 
 enumere(L):-
-    write('  '), enum_resp(L).
-
+    write(' '), enum_resp(L),nl.
 
 enum_resp([]) :- write(" * ").
 
@@ -380,8 +420,7 @@ enum_resp([P1,P2]) :-
     write(P1), write(" "),  write(P2).
 
 enum_resp(P) :- 
-    write(P).
-
+    write(P), nl,nl,nl.
 
 enum_resp([_,P2]) :- write(P2).
 

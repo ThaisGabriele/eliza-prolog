@@ -17,18 +17,19 @@
 * 13 sempre
 * 14 talvez
 * 15 bye
+* 16 *
 
 ## Expressões de duas palavras e resposta simples
 
-* 16 meu pai
-* 17 estou feliz 
-* 18 estou triste
-* 19 por causa
-* 20 eu sentia
+* 17 meu pai
+* 18 estou feliz 
+* 19 estou triste
+* 20 por causa
+* 21 eu sentia
 
 ### Expressões com curinga [2]
 
-* eu lembro
+* 22 eu lembro
 * voce lembra
 * se
 * eu sonhei -
@@ -50,5 +51,5 @@
 
 ### Expressões com curinga [1] e [2]
 
-* 39 sao como
-* 40 é como
+* 40 sao como
+* 41 é como
