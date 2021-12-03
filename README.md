@@ -30,15 +30,15 @@
 ### Expressões com curinga [2]
 
 * 22 eu lembro
-* voce lembra
-* se
-* eu sonhei -
-* eu sonhei com -
-* minha mae
-* eu quero
-* eu era 
-* * eu era *?
-* eu sou
+* 23 voce lembra
+* 24 se
+* 25 eu sonhei -
+* 26 eu sonhei com -
+* 27 minha mae
+* 28 eu quero
+* 29 eu era 
+* 30 * eu era *?
+* 31 eu sou
 * eu sou ?
 * você é * ?
 * você é 
